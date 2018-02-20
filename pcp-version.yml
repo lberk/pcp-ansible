@@ -1,0 +1,25 @@
+---
+- name: Determine PCP Version
+  hosts: '{{ target }}'
+  tasks:
+    - name: Determine Major Version
+      tags: version
+      shell: grep "MAJOR" VERSION.pcp | cut -f2 -d=
+      args:
+        chdir: '{{ srcdir }}'
+        executable: /bin/bash
+      register: PCP_MAJOR
+    - name: Determine Minor Version
+      tags: version
+      shell: grep "MINOR" VERSION.pcp | cut -f2 -d=
+      args:
+        chdir: '{{ srcdir }}'
+        executable: /bin/bash
+      register: PCP_MINOR
+    - name: Determine REVISION Version
+      tags: version
+      shell: grep "REVISION" VERSION.pcp | cut -f2 -d=
+      args:
+        chdir: '{{ srcdir }}'
+        executable: /bin/bash
+      register: PCP_REVISION

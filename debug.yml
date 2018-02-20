@@ -1,0 +1,7 @@
+---
+- name: testing the thing
+  hosts: "{{ target | default('127.0.0.1') }}"
+  tasks:
+    - name: "test again"
+      debug:
+        msg: "This is a test {{ qa_line | default('') }}"

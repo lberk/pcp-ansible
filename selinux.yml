@@ -1,0 +1,41 @@
+---
+- import_playbook: pcp-update.yml
+
+- name: Current Git Diff
+  hosts: local
+  connection: local
+  tags:
+    - patch
+  tasks:
+    - name: Generate patch file
+      shell: cd "{{ srcdir }}" && git diff > ansible.patch
+      executable: /bin/sh
+#    - debug:
+#        msg: "hostvars: {{ hostvars[groups['local'][0]]['srcdir'] }}"
+
+- name: Copy Over Patch
+  hosts: '{{ target }}'
+  tasks:
+    - name: Copy patch file to targets
+      copy:
+        src: "{{ hostvars[groups['local'][0]]['srcdir'] }}/ansible.patch"
+        dest: "{{ srcdir }}"
+#    - name: Debug stuff
+#      debug:
+#        msg: "system {{ inventory_hostname }} {{ hostvars['rhel7']['ansible_env']['USER'] }}"
+
+    - name: Patch pcp repo
+      patch:
+        src: "{{ srcdir }}/ansible.patch"
+        basedir: "{{ srcdir }}"
+        remote_src: yes #unsetting this probably makes the former task redendant, oh well
+        strip: 1
+
+# build, erase, install, test
+- import_playbook: pcp-build.yml
+
+- import_playbook: pcp-erase.yml
+
+- import_playbook: pcp-install.yml
+
+- import_playbook: qa.yml

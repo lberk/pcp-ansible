@@ -1,0 +1,11 @@
+---
+- name: update machine
+  hosts: '{{ target }}'
+  tags:
+    - update
+  tasks:
+    - name: yum update
+      yum:
+        name: '*'
+        state: latest
+        update_cache: yes

@@ -1,0 +1,9 @@
+---
+- name: Update PCP
+  hosts: '{{ target }}'
+  tasks:
+    - name: update repo
+      git:
+        repo: git://lberk.org/pcp.git
+        dest: '{{ srcdir }}'
+        force: yes

@@ -1,0 +1,42 @@
+---
+- name: Testsuite
+  hosts: '{{ target }}'
+  become: yes
+  become_user: pcpqa
+  tags:
+    - qa
+    - testing
+  tasks:
+    - name: Empty audit.log
+      become_user: root
+      shell: echo > /var/log/audit/audit.log
+      args:
+        executable: /bin/sh
+
+    - name: verify pcp install
+      shell: pcp
+      args:
+        executable: /bin/sh
+    - name: run check 0
+      shell: ./check 0
+      register: qa_output
+      args:
+        executable: /bin/sh
+    - name: run sanity check
+      stdout_callback: minimal
+      shell: ./check -g sanity -x flakey
+      register: qa_output
+      args:
+        executable: /bin/sh
+    - name: QA Output
+      debug:
+        msg: "{{ qa_output.stdout.split('\n') }}"
+    - name: run prescribed tests
+      # default to check all of the testsuite, but if any options are specified, use those instead
+      shell: "./check {{ qa_options | default(' ') }}"
+      register: qa_output
+      args:
+        executable: /bin/sh
+    - name: QA Output
+      debug:
+        msg: "{{ qa_output.stdout.split('\n') }}"

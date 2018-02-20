@@ -1,0 +1,92 @@
+---
+- name: update machine
+  hosts: '{{ target }}'
+  tags:
+    - update
+  tasks:
+    - name: yum update
+      yum:
+        name: '*'
+        state: latest
+        update_cache: yes
+
+- name: Testsuite
+  hosts: '{{ target }}'
+  become: yes
+  become_user: pcpqa
+  tags:
+    - qa
+    - testing
+  tasks:
+    - name: verify pcp install
+      shell: pcp
+      args:
+        executable: /bin/sh
+    - name: run check 0
+      shell: ./check 0
+      args:
+        executable: /bin/sh
+    - name: run sanity check
+      stdout_callback: minimal
+      shell: ./check -g sanity -x flakey
+      args:
+        executable: /bin/sh
+    - name: run full testsuite
+      shell: ./check
+      args:
+        executable: /bin/sh
+
+- name: build upstream pcp
+  hosts: '{{ target }}'
+  tags:
+    - compile
+    - build
+  tasks:
+    - name: update repo
+      git:
+        repo: git://lberk.org/pcp.git
+        dest: '{{ srcdir }}' # dest: pcp
+        force: yes
+    - name: Compile
+      shell: ./Makepkgs
+      args:
+        chdir: '{{ srcdir }}'
+        executable: /bin/sh
+    - name: Determine Major Version
+      tags: version
+      shell: grep "MAJOR" VERSION.pcp | cut -f2 -d=
+      args:
+        chdir: '{{ srcdir }}'
+        executable: /bin/bash
+      register: PCP_MAJOR
+    - name: Determine Minor Version
+      tags: version
+      shell: grep "MINOR" VERSION.pcp | cut -f2 -d=
+      args:
+        chdir: '{{ srcdir }}'
+        executable: /bin/bash
+      register: PCP_MINOR
+    - name: Determine REVISION Version
+      tags: version
+      shell: grep "REVISION" VERSION.pcp | cut -f2 -d=
+      args:
+        chdir: '{{ srcdir }}'
+        executable: /bin/bash
+      register: PCP_REVISION
+    - name: erase pcp packages
+      tags: erase
+      yum:
+        name: "pcp*"
+        state: removed
+    - name: Finding RPM files
+      tags: install
+      find:
+        paths: "{{ srcdir }}/pcp-{{PCP_MAJOR.stdout}}.{{PCP_MINOR.stdout}}.{{PCP_REVISION.stdout}}/build/rpm"
+        patterns: "*.rpm"
+      register: rpm_result
+    - name: Install local RPMs
+      tags: install
+      yum:
+        # hacky workaround, otherwise yum tries to install each one by one
+        name:  "{{ rpm_result.files | map(attribute='path') | join(',') }}"
+        state: present

@@ -1,0 +1,8 @@
+---
+- name: Build PCP
+  hosts: '{{ target }}'
+  tasks:
+    - name: Compile
+      shell: ./Makepkgs
+      args:
+        chdir: '{{ srcdir }}'

@@ -1,0 +1,9 @@
+---
+- name: erase pcp packages
+  hosts: '{{ target }}'
+  tasks:
+    - name: Erasing packages
+      tags: erase
+      yum:
+        name: "pcp*"
+        state: removed

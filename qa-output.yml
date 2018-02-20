@@ -1,0 +1,6 @@
+---
+- name: QA Output
+  hosts: '{{ target }}'
+  tasks:
+    debug:
+      msg: "{{ qa_output.stdout.split('\n') | default(' ') }}"

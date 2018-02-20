@@ -1,0 +1,17 @@
+---
+- import_playbook: pcp-version.yml
+- name: Install PCP
+  hosts: '{{ target }}'
+  tasks:
+    - name: Finding RPM files
+      tags: install
+      find:
+        paths: "{{ srcdir }}/pcp-{{PCP_MAJOR.stdout}}.{{PCP_MINOR.stdout}}.{{PCP_REVISION.stdout}}/build/rpm"
+        patterns: "*.rpm"
+      register: rpm_result
+    - name: Install local RPMs
+      tags: install
+      yum:
+        # hacky workaround, otherwise yum tries to install each one by one
+        name:  "{{ rpm_result.files | map(attribute='path') | join(',') }}"
+        state: present
